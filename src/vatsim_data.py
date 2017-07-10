@@ -156,7 +156,7 @@ def is_data_old_enough(eve_app, document_type):
 		return False
 
 def pull_vatsim_data(eve_app):
-	vatsim_data_file = urlopen('http://info.vroute.net/vatsim-data.txt')
+	vatsim_data_file = urlopen('http://37.59.115.154/whazzup.txt')
 	update_time = datetime.datetime.utcnow()
 	open_spec = None
 	for line in vatsim_data_file:
@@ -168,7 +168,7 @@ def pull_vatsim_data(eve_app):
 			open_spec = match_spec_token(line, 'spec_token')
 			if open_spec != None:
 				# assign the actual spec line found
-				specs[open_spec]['spec'] = line.replace(specs[open_spec]['spec_token'], '').strip()
+				specs[open_spec]['spec'] = 'callsign:cid:realname:clienttype:frequency:lat:lon:altitude:groundspeed:aircraft:tascruise:depairport:alt:destairport:ident_server:protocol:rating:transponder:facilitytype:visualrange:revision:type:deptime:actdeptime:hrsenroute:minenroute:hrsfuel:minfuel:altairport:remarks:route:starttime'
 				# we're not really on a spec so
 				open_spec = None
 				continue
