@@ -27,8 +27,8 @@ from copy import copy
 specs = {
 	'clients': {
 		'spec_token': '; !CLIENTS section -',
-		'open_token': '!CLIENTS:',
-		'close_token': ';',
+		'open_token': '!CLIENTS',
+		'close_token': '!SERVERS',
 		'spec': None
 	}
 }
