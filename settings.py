@@ -39,6 +39,7 @@ firs = {
 	'pagination': False
 }
 
+
 clients_schema = {
 	'callsign': {
 		'type': 'string'
@@ -83,8 +84,54 @@ clients = {
 	}
 }
 
+prefile_schema = {
+	'callsign': {
+		'type': 'string'
+	},
+	'cid': {
+		'type': 'string'
+	},
+	'realname': {
+		'type': 'string'
+	},
+	'clienttype': {
+		'type': 'string'
+	},
+	'location': {
+		'type': 'point'
+	},
+	'groundspeed': {
+		'type': 'number'
+	},
+	'altitude': {
+		'type': 'number'
+	},
+	'boundaries': {
+		'type': 'objectid',
+		'required': False,
+		'data_relation': {
+			'resource': 'firs',
+			'field': '_id',
+			'embeddable': True
+		},
+    },
+}
+prefile = {
+	'schema': prefile_schema,
+	'allow_unknown': True,
+	'resource_methods': ['GET'],
+	'item_methods': ['GET', 'PATCH'],
+	'pagination': False,
+	'mongo_indexes': {
+		'location_2d': [ ('location', '2d') ],
+		'location_2dsphere': [ ('location', '2dsphere') ]
+	}
+}
+
+
 DOMAIN = {
 	'clients': clients,
+	'prefile': prefile,
 	'firs': firs
 }
 

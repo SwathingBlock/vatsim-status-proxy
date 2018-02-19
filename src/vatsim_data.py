@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 VATSIM Status Proxy
-Copyright (C) 2017  Pedro Rodrigues <prodrigues1990@gmail.com>
+Copyright (C) 2017  Pedro Rodrigues <prodrigues1990@gmail.com>, Tiago Fernandes <tiagocf_13@hotmail.com>
 
 This file is part of VATSIM Status Proxy.
 
@@ -28,6 +28,8 @@ specs = {
 	'clients': {
 		'spec_token': '; !CLIENTS section -',
 		'open_token': '!CLIENTS:',
+		'spec_token_prefile': '; !PREFILE section -',
+		'open_token_prefile': '!PREFILE:',
 		'close_token': ';',
 		'spec': None
 	}
@@ -42,7 +44,7 @@ def match_spec_token(line, spec_item):
 	Returns:	(string) The name of the match document in `specs` or None
 
 	"""
-	if spec_item not in ('spec_token', 'open_token', 'close_token', 'spec'):
+	if spec_item not in ('spec_token', 'open_token', 'close_token', 'spec', 'spec_token_prefile', 'open_token_prefile'):
 		raise ValueError('Unable to find spec_item %s' % spec_item)
 
 	for name, spec in specs.items():
@@ -189,9 +191,11 @@ def is_data_old_enough(eve_app, document_type):
 		return False
 
 def pull_vatsim_data(eve_app):
+			
+	
 	vatsim_data_file = urlopen('http://info.vroute.net/vatsim-data.txt')
 	update_time = None
-	open_spec = None
+	open_spec = None			
 	for line in vatsim_data_file:
 		line = line.decode('utf-8', 'ignore')
 		line = line.strip()
@@ -224,6 +228,7 @@ def pull_vatsim_data(eve_app):
 
 			# try match with spec
 			try:
+				print(specs[open_spec]['spec'])
 				document = assign_from_spec(specs[open_spec]['spec'], line)
 			except Exception as error:
 				print('Failed to match spec on line %s' % line)
@@ -235,3 +240,55 @@ def pull_vatsim_data(eve_app):
 				save_document(document, open_spec, update_time, eve_app)
 			except Exception as error:
 				print(error)
+				
+				
+				
+				
+	vatsim_data_file = urlopen('http://info.vroute.net/vatsim-data.txt')
+	update_time = None
+	open_spec = None			
+	for line in vatsim_data_file:
+		line = line.decode('utf-8', 'ignore')
+		line = line.strip()
+
+		if update_time is None:
+			update_time = parse_updated_datetime(line)
+
+		if open_spec == None:
+			# listen for spec tokens, and append new spec
+			open_spec = match_spec_token(line, 'spec_token_prefile')
+			if open_spec != None:
+				# assign the actual spec line found
+				specs[open_spec]['spec'] = line.replace(specs[open_spec]['spec_token_prefile'], '').strip()
+				# we're not really on a spec so
+				open_spec = None
+				continue
+
+			# listen for open tokens
+			open_spec = match_spec_token(line, 'open_token_prefile')
+		else:
+			# listen for close tokens
+			close = match_spec_token(line, 'close_token')
+			if close != None:
+				# clear offline clients still on database
+				eve_app.data.driver.db[open_spec].remove({ '_updated': { '$lt': update_time } })
+				open_spec = None
+				continue
+
+			# or
+
+			# try match with spec
+			try:
+				print(specs[open_spec]['spec'])
+				document = assign_from_spec(specs[open_spec]['spec'], line)
+			except Exception as error:
+				print('Failed to match on line %s' % line)
+
+			document = convert_latlong_to_geojson(document)
+
+			# push to db
+			try:
+				save_document(document, open_spec, update_time, eve_app)
+			except Exception as error:
+				print(error)
+				
